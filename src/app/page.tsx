@@ -1,48 +1,119 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            Я изучаю Next.js
-          </h1>
+import { useState } from "react";
+
+type ActionType = "summary" | "theses" | "telegram" | null;
+
+export default function Home()
+{
+    const [url, setUrl] = useState<string>("");
+    const [actionType, setActionType] = useState<ActionType>(null);
+    const [result, setResult] = useState<string>("");
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+
+    // Handle URL input change
+    const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>): void =>
+    {
+        setUrl(e.target.value);
+    };
+
+    // Handle action button click
+    const handleAction = async (type: ActionType): Promise<void> =>
+    {
+        if (!url.trim())
+        {
+            alert("Пожалуйста, введите URL статьи");
+            return;
+        }
+
+        setActionType(type);
+        setIsLoading(true);
+        setResult("");
+
+        // TODO: Implement actual API call here
+        // For now, simulate loading
+        setTimeout(() =>
+        {
+            setIsLoading(false);
+            setResult(`Результат для действия "${type}" будет здесь...`);
+        }, 1000);
+    };
+
+    return (
+        <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
+            <main className="flex w-full max-w-4xl flex-col items-center justify-center py-16 px-8 bg-white dark:bg-black sm:px-16">
+                <div className="w-full max-w-3xl">
+                    <h1 className="mb-8 text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50 text-center">
+                        Референт - переводчик с ИИ-обработкой
+                    </h1>
+
+                    {/* URL Input Field */}
+                    <div className="mb-8">
+                        <label
+                            htmlFor="article-url"
+                            className="block mb-2 text-sm font-medium text-foreground"
+                        >
+                            URL англоязычной статьи
+                        </label>
+                        <input
+                            id="article-url"
+                            type="url"
+                            value={url}
+                            onChange={handleUrlChange}
+                            placeholder="https://example.com/article"
+                            className="w-full px-4 py-3 rounded-lg border border-solid border-black/[.08] bg-background text-foreground placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:border-white/[.145] dark:bg-[#1a1a1a]"
+                        />
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="mb-8 flex flex-col gap-4 sm:flex-row">
+                        <button
+                            onClick={() => handleAction("summary")}
+                            disabled={isLoading}
+                            className="flex-1 h-12 items-center justify-center rounded-lg bg-blue-600 px-5 text-white font-medium transition-colors hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            О чем статья?
+                        </button>
+                        <button
+                            onClick={() => handleAction("theses")}
+                            disabled={isLoading}
+                            className="flex-1 h-12 items-center justify-center rounded-lg bg-green-600 px-5 text-white font-medium transition-colors hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Тезисы
+                        </button>
+                        <button
+                            onClick={() => handleAction("telegram")}
+                            disabled={isLoading}
+                            className="flex-1 h-12 items-center justify-center rounded-lg bg-purple-600 px-5 text-white font-medium transition-colors hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Пост для Telegram
+                        </button>
+                    </div>
+
+                    {/* Result Display Block */}
+                    <div className="w-full rounded-lg border-2 border-solid border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1a1a1a] p-6 min-h-[200px]">
+                        <h2 className="mb-4 text-xl font-semibold text-foreground">
+                            Результат
+                        </h2>
+                        {isLoading ? (
+                            <div className="flex items-center justify-center py-8">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                                <span className="ml-3 text-foreground">
+                                    Генерация результата...
+                                </span>
+                            </div>
+                        ) : result ? (
+                            <div className="text-foreground whitespace-pre-wrap">
+                                {result}
+                            </div>
+                        ) : (
+                            <div className="text-gray-500 dark:text-gray-400 italic">
+                                Результат появится здесь после выбора действия...
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </main>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+    );
 }
