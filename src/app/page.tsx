@@ -75,23 +75,48 @@ export default function Home()
         {
             if (type === "translate")
             {
-                // Call translation API
-                const response = await fetch("/api/translate", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ url: url.trim() })
-                });
+                // Call translation API with timeout
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => {
+                    controller.abort();
+                }, 150000); // 2.5 minute timeout on client side
 
-                if (!response.ok)
+                try
                 {
-                    const error = await response.json();
-                    throw new Error(error.error || "Ошибка при переводе статьи");
-                }
+                    const response = await fetch("/api/translate", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ url: url.trim() }),
+                        signal: controller.signal
+                    });
 
-                const data = await response.json();
-                setResult(data.translation || "Перевод не получен");
+                    clearTimeout(timeoutId);
+
+                    if (!response.ok)
+                    {
+                        const error = await response.json();
+                        throw new Error(error.error || "Ошибка при переводе статьи");
+                    }
+
+                    const data = await response.json();
+                    setResult(data.translation || "Перевод не получен");
+                }
+                catch (error)
+                {
+                    clearTimeout(timeoutId);
+                    if (error instanceof Error && error.name === "AbortError")
+                    {
+                        setResult("Ошибка: Превышено время ожидания ответа. Запрос отменен.");
+                        return;
+                    }
+                    throw error;
+                }
+                finally
+                {
+                    setIsLoading(false);
+                }
             }
             else
             {

@@ -17,39 +17,60 @@ export async function POST(request: NextRequest)
         }
         else if (url)
         {
-            // Use the parse API to get article content
+            // Use the parse API to get article content with timeout
             const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
                            (request.headers.get("host") ? `http://${request.headers.get("host")}` : "http://localhost:3000");
             
-            const parseResponse = await fetch(`${baseUrl}/api/parse`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ url })
-            });
-
-            if (!parseResponse.ok)
-            {
-                const error = await parseResponse.json();
-                return NextResponse.json(
-                    { error: error.error || "Failed to parse article" },
-                    { status: parseResponse.status }
-                );
-            }
-
-            const parseData = await parseResponse.json();
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
             
-            if (!parseData.content)
+            try
             {
-                return NextResponse.json(
-                    { error: "Could not extract article content from URL" },
-                    { status: 400 }
-                );
-            }
+                const parseResponse = await fetch(`${baseUrl}/api/parse`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ url }),
+                    signal: controller.signal
+                });
 
-            articleContent = parseData.content;
-            articleTitle = parseData.title || null;
+                clearTimeout(timeoutId);
+
+                if (!parseResponse.ok)
+                {
+                    const error = await parseResponse.json();
+                    return NextResponse.json(
+                        { error: error.error || "Failed to parse article" },
+                        { status: parseResponse.status }
+                    );
+                }
+
+                const parseData = await parseResponse.json();
+                
+                if (!parseData.content)
+                {
+                    return NextResponse.json(
+                        { error: "Could not extract article content from URL" },
+                        { status: 400 }
+                    );
+                }
+
+                articleContent = parseData.content;
+                articleTitle = parseData.title || null;
+            }
+            catch (error)
+            {
+                clearTimeout(timeoutId);
+                if (error instanceof Error && error.name === "AbortError")
+                {
+                    return NextResponse.json(
+                        { error: "Timeout while parsing article. Please try again." },
+                        { status: 408 }
+                    );
+                }
+                throw error;
+            }
         }
         else
         {
@@ -57,6 +78,13 @@ export async function POST(request: NextRequest)
                 { error: "Either 'url' or 'content' is required" },
                 { status: 400 }
             );
+        }
+
+        // Limit content length to avoid timeout (max 50000 characters)
+        const MAX_CONTENT_LENGTH = 50000;
+        if (articleContent.length > MAX_CONTENT_LENGTH)
+        {
+            articleContent = articleContent.substring(0, MAX_CONTENT_LENGTH) + "\n\n[... текст обрезан из-за ограничения длины ...]";
         }
 
         // Get API key from environment
@@ -69,32 +97,54 @@ export async function POST(request: NextRequest)
             );
         }
 
-        // Call OpenRouter AI API
-        const openRouterResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${apiKey}`,
-                "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-                "X-Title": "Referent Translator"
-            },
-            body: JSON.stringify({
-                model: "deepseek/deepseek-chat",
-                messages: [
-                    {
-                        role: "system",
-                        content: "Ты профессиональный переводчик. Переведи следующий текст с английского языка на русский язык, сохраняя структуру и стиль оригинала."
-                    },
-                    {
-                        role: "user",
-                        content: articleTitle 
-                            ? `Переведи следующую статью на русский язык:\n\nЗаголовок: ${articleTitle}\n\nСодержание:\n${articleContent}`
-                            : `Переведи следующую статью на русский язык:\n\n${articleContent}`
-                    }
-                ],
-                temperature: 0.3
-            })
-        });
+        // Call OpenRouter AI API with timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout for translation
+        
+        let openRouterResponse: Response;
+        try
+        {
+            openRouterResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${apiKey}`,
+                    "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+                    "X-Title": "Referent Translator"
+                },
+                body: JSON.stringify({
+                    model: "deepseek/deepseek-chat",
+                    messages: [
+                        {
+                            role: "system",
+                            content: "Ты профессиональный переводчик. Переведи следующий текст с английского языка на русский язык, сохраняя структуру и стиль оригинала."
+                        },
+                        {
+                            role: "user",
+                            content: articleTitle 
+                                ? `Переведи следующую статью на русский язык:\n\nЗаголовок: ${articleTitle}\n\nСодержание:\n${articleContent}`
+                                : `Переведи следующую статью на русский язык:\n\n${articleContent}`
+                        }
+                    ],
+                    temperature: 0.3
+                }),
+                signal: controller.signal
+            });
+
+            clearTimeout(timeoutId);
+        }
+        catch (error)
+        {
+            clearTimeout(timeoutId);
+            if (error instanceof Error && error.name === "AbortError")
+            {
+                return NextResponse.json(
+                    { error: "Превышено время ожидания ответа от API перевода. Статья может быть слишком длинной. Попробуйте сократить текст или повторить попытку." },
+                    { status: 408 }
+                );
+            }
+            throw error;
+        }
 
         if (!openRouterResponse.ok)
         {
