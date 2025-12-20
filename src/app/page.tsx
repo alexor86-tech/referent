@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-type ActionType = "summary" | "theses" | "telegram" | null;
+type ActionType = "summary" | "theses" | "telegram" | "translate" | null;
 
 export default function Home()
 {
@@ -71,13 +71,44 @@ export default function Home()
         setIsLoading(true);
         setResult("");
 
-        // TODO: Implement actual API call here
-        // For now, simulate loading
-        setTimeout(() =>
+        try
+        {
+            if (type === "translate")
+            {
+                // Call translation API
+                const response = await fetch("/api/translate", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ url: url.trim() })
+                });
+
+                if (!response.ok)
+                {
+                    const error = await response.json();
+                    throw new Error(error.error || "Ошибка при переводе статьи");
+                }
+
+                const data = await response.json();
+                setResult(data.translation || "Перевод не получен");
+            }
+            else
+            {
+                // TODO: Implement actual API call for other actions
+                // For now, simulate loading
+                setTimeout(() =>
+                {
+                    setIsLoading(false);
+                    setResult(`Результат для действия "${type}" будет здесь...`);
+                }, 1000);
+            }
+        }
+        catch (error)
         {
             setIsLoading(false);
-            setResult(`Результат для действия "${type}" будет здесь...`);
-        }, 1000);
+            setResult(`Ошибка: ${error instanceof Error ? error.message : "Неизвестная ошибка"}`);
+        }
     };
 
     return (
@@ -119,6 +150,13 @@ export default function Home()
 
                     {/* Action Buttons */}
                     <div className="mb-8 flex flex-col gap-4 sm:flex-row">
+                        <button
+                            onClick={() => handleAction("translate")}
+                            disabled={isLoading}
+                            className="flex-1 h-12 items-center justify-center rounded-lg bg-orange-600 px-5 text-white font-medium transition-colors hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Перевести
+                        </button>
                         <button
                             onClick={() => handleAction("summary")}
                             disabled={isLoading}
