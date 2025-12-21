@@ -73,60 +73,86 @@ export default function Home()
 
         try
         {
-            if (type === "translate")
+            // Call API with timeout
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => {
+                controller.abort();
+            }, 150000); // 2.5 minute timeout on client side
+
+            try
             {
-                // Call translation API with timeout
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => {
-                    controller.abort();
-                }, 150000); // 2.5 minute timeout on client side
+                let apiEndpoint: string;
+                let resultKey: string;
+                let errorMessage: string;
 
-                try
+                // Determine API endpoint and result key based on action type
+                switch (type)
                 {
-                    const response = await fetch("/api/translate", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({ url: url.trim() }),
-                        signal: controller.signal
-                    });
-
-                    clearTimeout(timeoutId);
-
-                    if (!response.ok)
-                    {
-                        const error = await response.json();
-                        throw new Error(error.error || "Ошибка при переводе статьи");
-                    }
-
-                    const data = await response.json();
-                    setResult(data.translation || "Перевод не получен");
-                }
-                catch (error)
-                {
-                    clearTimeout(timeoutId);
-                    if (error instanceof Error && error.name === "AbortError")
-                    {
-                        setResult("Ошибка: Превышено время ожидания ответа. Запрос отменен.");
+                    case "translate":
+                        apiEndpoint = "/api/translate";
+                        resultKey = "translation";
+                        errorMessage = "Ошибка при переводе статьи";
+                        break;
+                    case "summary":
+                        apiEndpoint = "/api/summary";
+                        resultKey = "summary";
+                        errorMessage = "Ошибка при генерации описания статьи";
+                        break;
+                    case "theses":
+                        apiEndpoint = "/api/theses";
+                        resultKey = "theses";
+                        errorMessage = "Ошибка при генерации тезисов";
+                        break;
+                    case "telegram":
+                        apiEndpoint = "/api/telegram";
+                        resultKey = "telegramPost";
+                        errorMessage = "Ошибка при генерации поста для Telegram";
+                        break;
+                    default:
+                        setIsLoading(false);
                         return;
-                    }
-                    throw error;
                 }
-                finally
+
+                const response = await fetch(apiEndpoint, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ url: url.trim() }),
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+
+                if (!response.ok)
                 {
-                    setIsLoading(false);
+                    const error = await response.json();
+                    throw new Error(error.error || errorMessage);
                 }
+
+                const data = await response.json();
+                const resultValue = data[resultKey];
+                
+                if (!resultValue)
+                {
+                    throw new Error(`Результат не получен для действия "${type}"`);
+                }
+
+                setResult(resultValue);
             }
-            else
+            catch (error)
             {
-                // TODO: Implement actual API call for other actions
-                // For now, simulate loading
-                setTimeout(() =>
+                clearTimeout(timeoutId);
+                if (error instanceof Error && error.name === "AbortError")
                 {
-                    setIsLoading(false);
-                    setResult(`Результат для действия "${type}" будет здесь...`);
-                }, 1000);
+                    setResult("Ошибка: Превышено время ожидания ответа. Запрос отменен.");
+                    return;
+                }
+                throw error;
+            }
+            finally
+            {
+                setIsLoading(false);
             }
         }
         catch (error)
