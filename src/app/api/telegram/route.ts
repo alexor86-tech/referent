@@ -10,10 +10,12 @@ export async function POST(request: NextRequest)
         // Get article content - either from provided content or parse from URL
         let articleContent: string = "";
         let articleTitle: string | null = null;
+        let articleUrl: string | null = null;
 
         if (content)
         {
             articleContent = content;
+            articleUrl = url || null;
         }
         else if (url)
         {
@@ -58,6 +60,7 @@ export async function POST(request: NextRequest)
 
                 articleContent = parseData.content;
                 articleTitle = parseData.title || null;
+                articleUrl = url;
             }
             catch (error)
             {
@@ -117,13 +120,13 @@ export async function POST(request: NextRequest)
                     messages: [
                         {
                             role: "system",
-                            content: "Ты профессиональный копирайтер для социальных сетей. Создай пост для Telegram на основе этой статьи. Пост должен быть кратким, структурированным, с эмодзи, готовым для публикации. Ответ должен быть на русском языке."
+                            content: "Ты профессиональный копирайтер для социальных сетей. Создай пост для Telegram на основе этой статьи. Пост должен быть кратким, структурированным, с эмодзи, готовым для публикации. В конце поста обязательно добавь ссылку на источник статьи. Ответ должен быть на русском языке."
                         },
                         {
                             role: "user",
                             content: articleTitle 
-                                ? `Создай пост для Telegram на основе этой статьи:\n\nЗаголовок: ${articleTitle}\n\nСодержание:\n${articleContent}`
-                                : `Создай пост для Telegram на основе этой статьи:\n\n${articleContent}`
+                                ? `Создай пост для Telegram на основе этой статьи:\n\nЗаголовок: ${articleTitle}\n\nСодержание:\n${articleContent}${articleUrl ? `\n\nИсточник: ${articleUrl}` : ""}`
+                                : `Создай пост для Telegram на основе этой статьи:\n\n${articleContent}${articleUrl ? `\n\nИсточник: ${articleUrl}` : ""}`
                         }
                     ],
                     temperature: 0.3
@@ -159,7 +162,7 @@ export async function POST(request: NextRequest)
         const openRouterData = await openRouterResponse.json();
         
         // Extract telegram post from response
-        const telegramPost = openRouterData.choices?.[0]?.message?.content;
+        let telegramPost = openRouterData.choices?.[0]?.message?.content;
         
         if (!telegramPost)
         {
@@ -167,6 +170,12 @@ export async function POST(request: NextRequest)
                 { error: "No telegram post received from API" },
                 { status: 500 }
             );
+        }
+
+        // Ensure source link is added at the end if URL is available
+        if (articleUrl && !telegramPost.includes(articleUrl))
+        {
+            telegramPost = `${telegramPost}\n\n🔗 Источник: ${articleUrl}`;
         }
 
         return NextResponse.json({ telegramPost });
