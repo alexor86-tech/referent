@@ -201,14 +201,14 @@ export default function Home()
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-            <main className="flex w-full max-w-4xl flex-col items-center justify-center py-16 px-8 bg-white dark:bg-black sm:px-16">
+            <main className="flex w-full max-w-4xl flex-col items-center justify-center py-8 px-4 bg-white dark:bg-black sm:py-16 sm:px-8 md:px-16">
                 <div className="w-full max-w-3xl">
-                    <h1 className="mb-8 text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50 text-center">
+                    <h1 className="mb-6 text-2xl font-semibold leading-tight tracking-tight text-black dark:text-zinc-50 text-center sm:text-3xl sm:mb-8 sm:leading-10">
                         Референт - переводчик с ИИ-обработкой
                     </h1>
 
                     {/* URL Input Field */}
-                    <div className="mb-8">
+                    <div className="mb-6 sm:mb-8">
                         <label
                             htmlFor="article-url"
                             className="block mb-2 text-sm font-medium text-foreground"
@@ -221,20 +221,20 @@ export default function Home()
                             value={url}
                             onChange={handleUrlChange}
                             placeholder="Введите URL статьи, например: https://example.com/article"
-                            className="w-full px-4 py-3 rounded-lg border border-solid border-black/[.08] bg-background text-foreground placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:border-white/[.145] dark:bg-[#1a1a1a]"
+                            className="w-full px-4 py-3 rounded-lg border border-solid border-black/[.08] bg-background text-foreground placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:border-white/[.145] dark:bg-[#1a1a1a] text-sm sm:text-base"
                         />
-                        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 px-1">
                             Укажите ссылку на англоязычную статью
                         </p>
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="mb-8 flex flex-col gap-4 sm:flex-row">
+                    <div className="mb-6 sm:mb-8 flex flex-col gap-3 sm:gap-4 sm:flex-row sm:flex-wrap">
                         <button
                             onClick={() => handleAction("translate")}
                             disabled={isLoading}
                             title="Перевести статью с английского на русский язык"
-                            className="flex-1 h-12 items-center justify-center rounded-lg bg-orange-600 px-5 text-white font-medium transition-colors hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full sm:flex-1 h-12 items-center justify-center rounded-lg bg-orange-600 px-4 sm:px-5 text-white font-medium text-sm sm:text-base transition-colors hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             Перевести
                         </button>
@@ -242,7 +242,7 @@ export default function Home()
                             onClick={() => handleAction("summary")}
                             disabled={isLoading}
                             title="Получить краткое описание содержания статьи"
-                            className="flex-1 h-12 items-center justify-center rounded-lg bg-blue-600 px-5 text-white font-medium transition-colors hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full sm:flex-1 h-12 items-center justify-center rounded-lg bg-blue-600 px-4 sm:px-5 text-white font-medium text-sm sm:text-base transition-colors hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             О чем статья?
                         </button>
@@ -250,7 +250,7 @@ export default function Home()
                             onClick={() => handleAction("theses")}
                             disabled={isLoading}
                             title="Сгенерировать основные тезисы статьи"
-                            className="flex-1 h-12 items-center justify-center rounded-lg bg-green-600 px-5 text-white font-medium transition-colors hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full sm:flex-1 h-12 items-center justify-center rounded-lg bg-green-600 px-4 sm:px-5 text-white font-medium text-sm sm:text-base transition-colors hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             Тезисы
                         </button>
@@ -258,7 +258,7 @@ export default function Home()
                             onClick={() => handleAction("telegram")}
                             disabled={isLoading}
                             title="Создать готовый пост для публикации в Telegram"
-                            className="flex-1 h-12 items-center justify-center rounded-lg bg-purple-600 px-5 text-white font-medium transition-colors hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full sm:flex-1 h-12 items-center justify-center rounded-lg bg-purple-600 px-4 sm:px-5 text-white font-medium text-sm sm:text-base transition-colors hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             Пост для Telegram
                         </button>
@@ -266,7 +266,7 @@ export default function Home()
                             onClick={handleClear}
                             disabled={isLoading}
                             title="Очистить все поля и результаты"
-                            className="h-12 px-5 rounded-lg bg-gray-500 text-white font-medium transition-colors hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                            className="w-full sm:w-auto h-12 px-4 sm:px-5 rounded-lg bg-gray-500 text-white font-medium text-sm sm:text-base transition-colors hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             Очистить
                         </button>
@@ -274,8 +274,8 @@ export default function Home()
 
                     {/* Process Status Block */}
                     {processStatus && (
-                        <div className="mb-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-                            <p className="text-sm text-blue-700 dark:text-blue-300">
+                        <div className="mb-4 p-3 sm:p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                            <p className="text-sm text-blue-700 dark:text-blue-300 break-words">
                                 {processStatus}
                             </p>
                         </div>
@@ -285,22 +285,22 @@ export default function Home()
                     {error && (
                         <div className="mb-4">
                             <Alert variant="destructive">
-                                <p className="text-sm font-medium">{error}</p>
+                                <p className="text-sm font-medium break-words">{error}</p>
                             </Alert>
                         </div>
                     )}
 
                     {/* Result Display Block */}
-                    <div ref={resultRef} className="w-full rounded-lg border-2 border-solid border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1a1a1a] p-6 min-h-[200px]">
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-xl font-semibold text-foreground">
+                    <div ref={resultRef} className="w-full rounded-lg border-2 border-solid border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1a1a1a] p-4 sm:p-6 min-h-[200px]">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4">
+                            <h2 className="text-lg sm:text-xl font-semibold text-foreground">
                                 Результат
                             </h2>
                             {result && !isLoading && (
                                 <button
                                     onClick={handleCopy}
                                     title="Копировать результат в буфер обмена"
-                                    className="px-4 py-2 text-sm rounded-lg bg-gray-600 text-white font-medium transition-colors hover:bg-gray-700"
+                                    className="w-full sm:w-auto px-4 py-2 text-sm rounded-lg bg-gray-600 text-white font-medium transition-colors hover:bg-gray-700"
                                 >
                                     {copySuccess ? "Скопировано!" : "Копировать"}
                                 </button>
@@ -309,16 +309,16 @@ export default function Home()
                         {isLoading ? (
                             <div className="flex items-center justify-center py-8">
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                                <span className="ml-3 text-foreground">
+                                <span className="ml-3 text-foreground text-sm sm:text-base">
                                     Генерация результата...
                                 </span>
                             </div>
                         ) : result ? (
-                            <div className="text-foreground whitespace-pre-wrap font-mono text-sm overflow-auto">
+                            <div className="text-foreground whitespace-pre-wrap font-mono text-xs sm:text-sm overflow-auto break-words">
                                 {result}
                             </div>
                         ) : !error ? (
-                            <div className="text-gray-500 dark:text-gray-400 italic">
+                            <div className="text-gray-500 dark:text-gray-400 italic text-sm sm:text-base">
                                 Результат появится здесь после выбора действия...
                             </div>
                         ) : null}

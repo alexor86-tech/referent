@@ -15,7 +15,7 @@ interface AlertProps
  */
 export function Alert({ variant = "default", children, className = "" }: AlertProps)
 {
-    const baseStyles = "rounded-lg border p-4";
+    const baseStyles = "rounded-lg border p-3 sm:p-4";
     const variantStyles = variant === "destructive"
         ? "border-red-200 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300"
         : "border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300";
