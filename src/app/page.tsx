@@ -234,7 +234,11 @@ export default function Home()
                             onClick={() => handleAction("translate")}
                             disabled={isLoading}
                             title="Перевести статью с английского на русский язык"
-                            className="w-full sm:flex-1 h-12 items-center justify-center rounded-lg bg-orange-600 px-4 sm:px-5 text-white font-medium text-sm sm:text-base transition-colors hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className={`w-full sm:flex-1 h-12 items-center justify-center rounded-lg px-4 sm:px-5 text-white font-medium text-sm sm:text-base transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                                actionType === "translate" && isLoading
+                                    ? "bg-orange-700 ring-2 ring-orange-400 ring-offset-2"
+                                    : "bg-orange-600 hover:bg-orange-700"
+                            }`}
                         >
                             Перевести
                         </button>
@@ -242,7 +246,11 @@ export default function Home()
                             onClick={() => handleAction("summary")}
                             disabled={isLoading}
                             title="Получить краткое описание содержания статьи"
-                            className="w-full sm:flex-1 h-12 items-center justify-center rounded-lg bg-blue-600 px-4 sm:px-5 text-white font-medium text-sm sm:text-base transition-colors hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className={`w-full sm:flex-1 h-12 items-center justify-center rounded-lg px-4 sm:px-5 text-white font-medium text-sm sm:text-base transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                                actionType === "summary" && isLoading
+                                    ? "bg-blue-700 ring-2 ring-blue-400 ring-offset-2"
+                                    : "bg-blue-600 hover:bg-blue-700"
+                            }`}
                         >
                             О чем статья?
                         </button>
@@ -250,7 +258,11 @@ export default function Home()
                             onClick={() => handleAction("theses")}
                             disabled={isLoading}
                             title="Сгенерировать основные тезисы статьи"
-                            className="w-full sm:flex-1 h-12 items-center justify-center rounded-lg bg-green-600 px-4 sm:px-5 text-white font-medium text-sm sm:text-base transition-colors hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className={`w-full sm:flex-1 h-12 items-center justify-center rounded-lg px-4 sm:px-5 text-white font-medium text-sm sm:text-base transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                                actionType === "theses" && isLoading
+                                    ? "bg-green-700 ring-2 ring-green-400 ring-offset-2"
+                                    : "bg-green-600 hover:bg-green-700"
+                            }`}
                         >
                             Тезисы
                         </button>
@@ -258,7 +270,11 @@ export default function Home()
                             onClick={() => handleAction("telegram")}
                             disabled={isLoading}
                             title="Создать готовый пост для публикации в Telegram"
-                            className="w-full sm:flex-1 h-12 items-center justify-center rounded-lg bg-purple-600 px-4 sm:px-5 text-white font-medium text-sm sm:text-base transition-colors hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className={`w-full sm:flex-1 h-12 items-center justify-center rounded-lg px-4 sm:px-5 text-white font-medium text-sm sm:text-base transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                                actionType === "telegram" && isLoading
+                                    ? "bg-purple-700 ring-2 ring-purple-400 ring-offset-2"
+                                    : "bg-purple-600 hover:bg-purple-700"
+                            }`}
                         >
                             Пост для Telegram
                         </button>
