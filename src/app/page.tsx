@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { Alert } from "@/components/ui/alert";
 
 type ActionType = "summary" | "theses" | "telegram" | "translate" | null;
+
+type ErrorType = "PARSE_ERROR" | "API_TIMEOUT" | "API_ERROR" | "VALIDATION_ERROR" | "UNKNOWN_ERROR" | null;
 
 export default function Home()
 {
@@ -11,6 +14,8 @@ export default function Home()
     const [result, setResult] = useState<string>("");
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [processStatus, setProcessStatus] = useState<string>("");
+    const [error, setError] = useState<string | null>(null);
+    const [errorType, setErrorType] = useState<ErrorType>(null);
 
     // Handle URL input change
     const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>): void =>
@@ -30,6 +35,8 @@ export default function Home()
         setActionType(type);
         setIsLoading(true);
         setResult("");
+        setError(null);
+        setErrorType(null);
         setProcessStatus("Загружаю статью…");
 
         try
@@ -95,8 +102,15 @@ export default function Home()
 
                 if (!response.ok)
                 {
-                    const error = await response.json();
-                    throw new Error(error.error || errorMessage);
+                    const errorData = await response.json();
+                    const errorMessage = errorData.error || errorMessage;
+                    const errorTypeValue = errorData.errorType || "UNKNOWN_ERROR";
+                    
+                    setError(errorMessage);
+                    setErrorType(errorTypeValue as ErrorType);
+                    setProcessStatus("");
+                    setIsLoading(false);
+                    return;
                 }
 
                 const data = await response.json();
@@ -109,14 +123,18 @@ export default function Home()
 
                 setResult(resultValue);
                 setProcessStatus("");
+                setError(null);
+                setErrorType(null);
             }
             catch (error)
             {
                 clearTimeout(timeoutId);
                 if (error instanceof Error && error.name === "AbortError")
                 {
-                    setResult("Ошибка: Превышено время ожидания ответа. Запрос отменен.");
+                    setError("Превышено время ожидания ответа. Запрос отменен.");
+                    setErrorType("API_TIMEOUT");
                     setProcessStatus("");
+                    setIsLoading(false);
                     return;
                 }
                 throw error;
@@ -130,7 +148,8 @@ export default function Home()
         {
             setIsLoading(false);
             setProcessStatus("");
-            setResult(`Ошибка: ${error instanceof Error ? error.message : "Неизвестная ошибка"}`);
+            setError("Произошла непредвиденная ошибка. Пожалуйста, попробуйте позже.");
+            setErrorType("UNKNOWN_ERROR");
         }
     };
 
@@ -208,6 +227,15 @@ export default function Home()
                         </div>
                     )}
 
+                    {/* Error Alert Block */}
+                    {error && (
+                        <div className="mb-4">
+                            <Alert variant="destructive">
+                                <p className="text-sm font-medium">{error}</p>
+                            </Alert>
+                        </div>
+                    )}
+
                     {/* Result Display Block */}
                     <div className="w-full rounded-lg border-2 border-solid border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1a1a1a] p-6 min-h-[200px]">
                         <h2 className="mb-4 text-xl font-semibold text-foreground">
@@ -224,11 +252,11 @@ export default function Home()
                             <div className="text-foreground whitespace-pre-wrap font-mono text-sm overflow-auto">
                                 {result}
                             </div>
-                        ) : (
+                        ) : !error ? (
                             <div className="text-gray-500 dark:text-gray-400 italic">
                                 Результат появится здесь после выбора действия...
                             </div>
-                        )}
+                        ) : null}
                     </div>
                 </div>
             </main>

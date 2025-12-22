@@ -41,7 +41,10 @@ export async function POST(request: NextRequest)
                 {
                     const error = await parseResponse.json();
                     return NextResponse.json(
-                        { error: error.error || "Failed to parse article" },
+                        { 
+                            error: "Не удалось загрузить статью по этой ссылке.",
+                            errorType: "PARSE_ERROR"
+                        },
                         { status: parseResponse.status }
                     );
                 }
@@ -51,7 +54,10 @@ export async function POST(request: NextRequest)
                 if (!parseData.content)
                 {
                     return NextResponse.json(
-                        { error: "Could not extract article content from URL" },
+                        { 
+                            error: "Не удалось загрузить статью по этой ссылке.",
+                            errorType: "PARSE_ERROR"
+                        },
                         { status: 400 }
                     );
                 }
@@ -65,7 +71,10 @@ export async function POST(request: NextRequest)
                 if (error instanceof Error && error.name === "AbortError")
                 {
                     return NextResponse.json(
-                        { error: "Timeout while parsing article. Please try again." },
+                        { 
+                            error: "Не удалось загрузить статью по этой ссылке.",
+                            errorType: "PARSE_ERROR"
+                        },
                         { status: 408 }
                     );
                 }
@@ -139,7 +148,10 @@ export async function POST(request: NextRequest)
             if (error instanceof Error && error.name === "AbortError")
             {
                 return NextResponse.json(
-                    { error: "Превышено время ожидания ответа от API. Статья может быть слишком длинной. Попробуйте сократить текст или повторить попытку." },
+                    { 
+                        error: "Превышено время ожидания ответа от API. Статья может быть слишком длинной. Попробуйте сократить текст или повторить попытку.",
+                        errorType: "API_TIMEOUT"
+                    },
                     { status: 408 }
                 );
             }
@@ -151,7 +163,10 @@ export async function POST(request: NextRequest)
             const errorText = await openRouterResponse.text();
             console.error("OpenRouter API error:", errorText);
             return NextResponse.json(
-                { error: `OpenRouter API error: ${openRouterResponse.statusText}` },
+                { 
+                    error: "Произошла ошибка при обработке запроса. Пожалуйста, попробуйте позже.",
+                    errorType: "API_ERROR"
+                },
                 { status: openRouterResponse.status }
             );
         }
@@ -164,7 +179,10 @@ export async function POST(request: NextRequest)
         if (!summary)
         {
             return NextResponse.json(
-                { error: "No summary received from API" },
+                { 
+                    error: "Не удалось получить описание статьи. Пожалуйста, попробуйте еще раз.",
+                    errorType: "API_ERROR"
+                },
                 { status: 500 }
             );
         }
@@ -175,7 +193,10 @@ export async function POST(request: NextRequest)
     {
         console.error("Error generating summary:", error);
         return NextResponse.json(
-            { error: error instanceof Error ? error.message : "Unknown error" },
+            { 
+                error: "Произошла непредвиденная ошибка. Пожалуйста, попробуйте позже.",
+                errorType: "UNKNOWN_ERROR"
+            },
             { status: 500 }
         );
     }

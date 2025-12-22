@@ -224,7 +224,10 @@ export async function POST(request: NextRequest)
         if (!response.ok)
         {
             return NextResponse.json(
-                { error: `Failed to fetch URL: ${response.statusText}` },
+                { 
+                    error: "Не удалось загрузить статью по этой ссылке.",
+                    errorType: "PARSE_ERROR"
+                },
                 { status: response.status }
             );
         }
@@ -237,8 +240,24 @@ export async function POST(request: NextRequest)
     catch (error)
     {
         console.error("Error parsing article:", error);
+        
+        // Check if it's a timeout or network error
+        if (error instanceof Error && (error.name === "AbortError" || error.message.includes("timeout") || error.message.includes("fetch")))
+        {
+            return NextResponse.json(
+                { 
+                    error: "Не удалось загрузить статью по этой ссылке.",
+                    errorType: "PARSE_ERROR"
+                },
+                { status: 408 }
+            );
+        }
+        
         return NextResponse.json(
-            { error: error instanceof Error ? error.message : "Unknown error" },
+            { 
+                error: "Не удалось загрузить статью по этой ссылке.",
+                errorType: "PARSE_ERROR"
+            },
             { status: 500 }
         );
     }
