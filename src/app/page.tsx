@@ -10,6 +10,7 @@ export default function Home()
     const [actionType, setActionType] = useState<ActionType>(null);
     const [result, setResult] = useState<string>("");
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [processStatus, setProcessStatus] = useState<string>("");
 
     // Handle URL input change
     const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>): void =>
@@ -29,6 +30,7 @@ export default function Home()
         setActionType(type);
         setIsLoading(true);
         setResult("");
+        setProcessStatus("Загружаю статью…");
 
         try
         {
@@ -43,6 +45,7 @@ export default function Home()
                 let apiEndpoint: string;
                 let resultKey: string;
                 let errorMessage: string;
+                let processMessage: string;
 
                 // Determine API endpoint and result key based on action type
                 switch (type)
@@ -51,26 +54,33 @@ export default function Home()
                         apiEndpoint = "/api/translate";
                         resultKey = "translation";
                         errorMessage = "Ошибка при переводе статьи";
+                        processMessage = "Перевожу статью…";
                         break;
                     case "summary":
                         apiEndpoint = "/api/summary";
                         resultKey = "summary";
                         errorMessage = "Ошибка при генерации описания статьи";
+                        processMessage = "Генерирую описание статьи…";
                         break;
                     case "theses":
                         apiEndpoint = "/api/theses";
                         resultKey = "theses";
                         errorMessage = "Ошибка при генерации тезисов";
+                        processMessage = "Генерирую тезисы…";
                         break;
                     case "telegram":
                         apiEndpoint = "/api/telegram";
                         resultKey = "telegramPost";
                         errorMessage = "Ошибка при генерации поста для Telegram";
+                        processMessage = "Создаю пост для Telegram…";
                         break;
                     default:
                         setIsLoading(false);
+                        setProcessStatus("");
                         return;
                 }
+
+                setProcessStatus(processMessage);
 
                 const response = await fetch(apiEndpoint, {
                     method: "POST",
@@ -98,6 +108,7 @@ export default function Home()
                 }
 
                 setResult(resultValue);
+                setProcessStatus("");
             }
             catch (error)
             {
@@ -105,6 +116,7 @@ export default function Home()
                 if (error instanceof Error && error.name === "AbortError")
                 {
                     setResult("Ошибка: Превышено время ожидания ответа. Запрос отменен.");
+                    setProcessStatus("");
                     return;
                 }
                 throw error;
@@ -117,6 +129,7 @@ export default function Home()
         catch (error)
         {
             setIsLoading(false);
+            setProcessStatus("");
             setResult(`Ошибка: ${error instanceof Error ? error.message : "Неизвестная ошибка"}`);
         }
     };
@@ -142,9 +155,12 @@ export default function Home()
                             type="url"
                             value={url}
                             onChange={handleUrlChange}
-                            placeholder="https://example.com/article"
+                            placeholder="Введите URL статьи, например: https://example.com/article"
                             className="w-full px-4 py-3 rounded-lg border border-solid border-black/[.08] bg-background text-foreground placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:border-white/[.145] dark:bg-[#1a1a1a]"
                         />
+                        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                            Укажите ссылку на англоязычную статью
+                        </p>
                     </div>
 
                     {/* Action Buttons */}
@@ -152,6 +168,7 @@ export default function Home()
                         <button
                             onClick={() => handleAction("translate")}
                             disabled={isLoading}
+                            title="Перевести статью с английского на русский язык"
                             className="flex-1 h-12 items-center justify-center rounded-lg bg-orange-600 px-5 text-white font-medium transition-colors hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             Перевести
@@ -159,6 +176,7 @@ export default function Home()
                         <button
                             onClick={() => handleAction("summary")}
                             disabled={isLoading}
+                            title="Получить краткое описание содержания статьи"
                             className="flex-1 h-12 items-center justify-center rounded-lg bg-blue-600 px-5 text-white font-medium transition-colors hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             О чем статья?
@@ -166,6 +184,7 @@ export default function Home()
                         <button
                             onClick={() => handleAction("theses")}
                             disabled={isLoading}
+                            title="Сгенерировать основные тезисы статьи"
                             className="flex-1 h-12 items-center justify-center rounded-lg bg-green-600 px-5 text-white font-medium transition-colors hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             Тезисы
@@ -173,11 +192,21 @@ export default function Home()
                         <button
                             onClick={() => handleAction("telegram")}
                             disabled={isLoading}
+                            title="Создать готовый пост для публикации в Telegram"
                             className="flex-1 h-12 items-center justify-center rounded-lg bg-purple-600 px-5 text-white font-medium transition-colors hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             Пост для Telegram
                         </button>
                     </div>
+
+                    {/* Process Status Block */}
+                    {processStatus && (
+                        <div className="mb-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                            <p className="text-sm text-blue-700 dark:text-blue-300">
+                                {processStatus}
+                            </p>
+                        </div>
+                    )}
 
                     {/* Result Display Block */}
                     <div className="w-full rounded-lg border-2 border-solid border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1a1a1a] p-6 min-h-[200px]">
