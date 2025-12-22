@@ -149,10 +149,10 @@ export default function Home()
                 if (!response.ok)
                 {
                     const errorData = await response.json();
-                    const errorMessage = errorData.error || errorMessage;
+                    const errorMessageFromApi = errorData.error || errorMessage;
                     const errorTypeValue = errorData.errorType || "UNKNOWN_ERROR";
                     
-                    setError(errorMessage);
+                    setError(errorMessageFromApi);
                     setErrorType(errorTypeValue as ErrorType);
                     setProcessStatus("");
                     setIsLoading(false);
