@@ -120,13 +120,13 @@ export async function POST(request: NextRequest)
                     messages: [
                         {
                             role: "system",
-                            content: "Ты профессиональный копирайтер для социальных сетей. Создай пост для Telegram на основе этой статьи. Пост должен быть кратким, структурированным, с эмодзи, готовым для публикации. В конце поста обязательно добавь ссылку на источник статьи. Ответ должен быть на русском языке."
+                            content: "Ты профессиональный копирайтер для социальных сетей. Создай пост для Telegram на основе этой статьи. Пост должен быть кратким, структурированным, с эмодзи, готовым для публикации. НЕ добавляй ссылку на источник в конце поста - она будет добавлена автоматически. Ответ должен быть на русском языке."
                         },
                         {
                             role: "user",
                             content: articleTitle 
-                                ? `Создай пост для Telegram на основе этой статьи:\n\nЗаголовок: ${articleTitle}\n\nСодержание:\n${articleContent}${articleUrl ? `\n\nИсточник: ${articleUrl}` : ""}`
-                                : `Создай пост для Telegram на основе этой статьи:\n\n${articleContent}${articleUrl ? `\n\nИсточник: ${articleUrl}` : ""}`
+                                ? `Создай пост для Telegram на основе этой статьи:\n\nЗаголовок: ${articleTitle}\n\nСодержание:\n${articleContent}`
+                                : `Создай пост для Telegram на основе этой статьи:\n\n${articleContent}`
                         }
                     ],
                     temperature: 0.3
@@ -173,9 +173,27 @@ export async function POST(request: NextRequest)
         }
 
         // Ensure source link is added at the end if URL is available
-        if (articleUrl && !telegramPost.includes(articleUrl))
+        // Remove any existing source links that AI might have added
+        if (articleUrl)
         {
-            telegramPost = `${telegramPost}\n\n🔗 Источник: ${articleUrl}`;
+            // Remove common patterns of source links that AI might add
+            const sourcePatterns = [
+                /🔗\s*Источник[:\s]*.*$/im,
+                /Источник[:\s]*.*$/im,
+                /\[.*?\]\(https?:\/\/[^\)]+\)/g, // Markdown links
+                /\(https?:\/\/[^\)]+\)/g, // URLs in parentheses
+                /\[https?:\/\/[^\]]+\]/g, // URLs in square brackets
+            ];
+            
+            // Clean up any existing source mentions
+            let cleanedPost = telegramPost;
+            sourcePatterns.forEach(pattern => {
+                cleanedPost = cleanedPost.replace(pattern, '').trim();
+            });
+            
+            // Remove trailing empty lines and add our source link
+            cleanedPost = cleanedPost.replace(/\n+$/, '');
+            telegramPost = `${cleanedPost}\n\n🔗 Источник: ${articleUrl}`;
         }
 
         return NextResponse.json({ telegramPost });
