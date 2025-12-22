@@ -17,47 +17,6 @@ export default function Home()
         setUrl(e.target.value);
     };
 
-    // Parse article from URL
-    const handleParse = async (): Promise<void> =>
-    {
-        if (!url.trim())
-        {
-            alert("Пожалуйста, введите URL статьи");
-            return;
-        }
-
-        setIsLoading(true);
-        setResult("");
-
-        try
-        {
-            const response = await fetch("/api/parse", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ url: url.trim() })
-            });
-
-            if (!response.ok)
-            {
-                const error = await response.json();
-                throw new Error(error.error || "Ошибка при парсинге статьи");
-            }
-
-            const data = await response.json();
-            setResult(JSON.stringify(data, null, 2));
-        }
-        catch (error)
-        {
-            setResult(`Ошибка: ${error instanceof Error ? error.message : "Неизвестная ошибка"}`);
-        }
-        finally
-        {
-            setIsLoading(false);
-        }
-    };
-
     // Handle action button click
     const handleAction = async (type: ActionType): Promise<void> =>
     {
@@ -186,17 +145,6 @@ export default function Home()
                             placeholder="https://example.com/article"
                             className="w-full px-4 py-3 rounded-lg border border-solid border-black/[.08] bg-background text-foreground placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:border-white/[.145] dark:bg-[#1a1a1a]"
                         />
-                    </div>
-
-                    {/* Parse Button */}
-                    <div className="mb-4">
-                        <button
-                            onClick={handleParse}
-                            disabled={isLoading}
-                            className="w-full h-12 items-center justify-center rounded-lg bg-gray-700 px-5 text-white font-medium transition-colors hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            Парсить статью
-                        </button>
                     </div>
 
                     {/* Action Buttons */}
