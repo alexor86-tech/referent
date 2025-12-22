@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Alert } from "@/components/ui/alert";
 
 type ActionType = "summary" | "theses" | "telegram" | "translate" | null;
@@ -16,11 +16,57 @@ export default function Home()
     const [processStatus, setProcessStatus] = useState<string>("");
     const [error, setError] = useState<string | null>(null);
     const [errorType, setErrorType] = useState<ErrorType>(null);
+    const [copySuccess, setCopySuccess] = useState<boolean>(false);
+    const resultRef = useRef<HTMLDivElement>(null);
+
+    // Scroll to result block after successful generation
+    useEffect(() =>
+    {
+        if (result && !isLoading && resultRef.current)
+        {
+            resultRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+    }, [result, isLoading]);
 
     // Handle URL input change
     const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>): void =>
     {
         setUrl(e.target.value);
+    };
+
+    // Handle clear button click
+    const handleClear = (): void =>
+    {
+        setUrl("");
+        setActionType(null);
+        setResult("");
+        setIsLoading(false);
+        setProcessStatus("");
+        setError(null);
+        setErrorType(null);
+        setCopySuccess(false);
+    };
+
+    // Handle copy button click
+    const handleCopy = async (): Promise<void> =>
+    {
+        if (!result)
+        {
+            return;
+        }
+
+        try
+        {
+            await navigator.clipboard.writeText(result);
+            setCopySuccess(true);
+            setTimeout(() => {
+                setCopySuccess(false);
+            }, 2000);
+        }
+        catch (err)
+        {
+            console.error("Failed to copy text:", err);
+        }
     };
 
     // Handle action button click
@@ -216,6 +262,14 @@ export default function Home()
                         >
                             Пост для Telegram
                         </button>
+                        <button
+                            onClick={handleClear}
+                            disabled={isLoading}
+                            title="Очистить все поля и результаты"
+                            className="h-12 px-5 rounded-lg bg-gray-500 text-white font-medium transition-colors hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                        >
+                            Очистить
+                        </button>
                     </div>
 
                     {/* Process Status Block */}
@@ -237,10 +291,21 @@ export default function Home()
                     )}
 
                     {/* Result Display Block */}
-                    <div className="w-full rounded-lg border-2 border-solid border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1a1a1a] p-6 min-h-[200px]">
-                        <h2 className="mb-4 text-xl font-semibold text-foreground">
-                            Результат
-                        </h2>
+                    <div ref={resultRef} className="w-full rounded-lg border-2 border-solid border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1a1a1a] p-6 min-h-[200px]">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-xl font-semibold text-foreground">
+                                Результат
+                            </h2>
+                            {result && !isLoading && (
+                                <button
+                                    onClick={handleCopy}
+                                    title="Копировать результат в буфер обмена"
+                                    className="px-4 py-2 text-sm rounded-lg bg-gray-600 text-white font-medium transition-colors hover:bg-gray-700"
+                                >
+                                    {copySuccess ? "Скопировано!" : "Копировать"}
+                                </button>
+                            )}
+                        </div>
                         {isLoading ? (
                             <div className="flex items-center justify-center py-8">
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
