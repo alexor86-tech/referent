@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Alert } from "@/components/ui/alert";
 
-type ActionType = "summary" | "theses" | "telegram" | "translate" | null;
+type ActionType = "summary" | "theses" | "telegram" | "translate" | "illustration" | null;
 
 type ErrorType = "PARSE_ERROR" | "API_TIMEOUT" | "API_ERROR" | "VALIDATION_ERROR" | "UNKNOWN_ERROR" | null;
 
@@ -12,6 +12,8 @@ export default function Home()
     const [url, setUrl] = useState<string>("");
     const [actionType, setActionType] = useState<ActionType>(null);
     const [result, setResult] = useState<string>("");
+    const [illustrationUrl, setIllustrationUrl] = useState<string | null>(null);
+    const [illustrationPrompt, setIllustrationPrompt] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [processStatus, setProcessStatus] = useState<string>("");
     const [error, setError] = useState<string | null>(null);
@@ -22,11 +24,11 @@ export default function Home()
     // Scroll to result block after successful generation
     useEffect(() =>
     {
-        if (result && !isLoading && resultRef.current)
+        if ((result || illustrationUrl) && !isLoading && resultRef.current)
         {
             resultRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
         }
-    }, [result, isLoading]);
+    }, [result, illustrationUrl, isLoading]);
 
     // Handle URL input change
     const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>): void =>
@@ -40,6 +42,8 @@ export default function Home()
         setUrl("");
         setActionType(null);
         setResult("");
+        setIllustrationUrl(null);
+        setIllustrationPrompt(null);
         setIsLoading(false);
         setProcessStatus("");
         setError(null);
@@ -81,6 +85,8 @@ export default function Home()
         setActionType(type);
         setIsLoading(true);
         setResult("");
+        setIllustrationUrl(null);
+        setIllustrationPrompt(null);
         setError(null);
         setErrorType(null);
         setProcessStatus("Загружаю статью…");
@@ -127,6 +133,12 @@ export default function Home()
                         errorMessage = "Ошибка при генерации поста для Telegram";
                         processMessage = "Создаю пост для Telegram…";
                         break;
+                    case "illustration":
+                        apiEndpoint = "/api/illustration";
+                        resultKey = "illustration";
+                        errorMessage = "Ошибка при генерации иллюстрации";
+                        processMessage = "Создаю иллюстрацию…";
+                        break;
                     default:
                         setIsLoading(false);
                         setProcessStatus("");
@@ -160,14 +172,36 @@ export default function Home()
                 }
 
                 const data = await response.json();
-                const resultValue = data[resultKey];
                 
-                if (!resultValue)
+                // Handle illustration separately (returns image URL and prompt)
+                if (type === "illustration")
                 {
-                    throw new Error(`Результат не получен для действия "${type}"`);
+                    const illustrationValue = data.illustration;
+                    const promptValue = data.prompt;
+                    
+                    if (!illustrationValue)
+                    {
+                        throw new Error("Изображение не получено");
+                    }
+
+                    setIllustrationUrl(illustrationValue);
+                    setIllustrationPrompt(promptValue || null);
+                    setResult("");
+                }
+                else
+                {
+                    const resultValue = data[resultKey];
+                    
+                    if (!resultValue)
+                    {
+                        throw new Error(`Результат не получен для действия "${type}"`);
+                    }
+
+                    setResult(resultValue);
+                    setIllustrationUrl(null);
+                    setIllustrationPrompt(null);
                 }
 
-                setResult(resultValue);
                 setProcessStatus("");
                 setError(null);
                 setErrorType(null);
@@ -229,12 +263,12 @@ export default function Home()
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="mb-6 sm:mb-8 flex flex-col gap-3 sm:gap-4 sm:flex-row sm:flex-wrap">
+                    <div className="mb-3 sm:mb-4 flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-4">
                         <button
                             onClick={() => handleAction("translate")}
                             disabled={isLoading}
                             title="Перевести статью с английского на русский язык"
-                            className={`w-full sm:flex-1 h-12 items-center justify-center rounded-lg px-4 sm:px-5 text-white font-medium text-sm sm:text-base transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                            className={`w-full sm:flex-1 sm:min-w-0 h-12 items-center justify-center rounded-lg px-4 sm:px-5 text-white font-medium text-sm sm:text-base transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                                 actionType === "translate" && isLoading
                                     ? "bg-orange-700 ring-2 ring-orange-400 ring-offset-2"
                                     : "bg-orange-600 hover:bg-orange-700"
@@ -246,7 +280,7 @@ export default function Home()
                             onClick={() => handleAction("summary")}
                             disabled={isLoading}
                             title="Получить краткое описание содержания статьи"
-                            className={`w-full sm:flex-1 h-12 items-center justify-center rounded-lg px-4 sm:px-5 text-white font-medium text-sm sm:text-base transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                            className={`w-full sm:flex-1 sm:min-w-0 h-12 items-center justify-center rounded-lg px-4 sm:px-5 text-white font-medium text-sm sm:text-base transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                                 actionType === "summary" && isLoading
                                     ? "bg-blue-700 ring-2 ring-blue-400 ring-offset-2"
                                     : "bg-blue-600 hover:bg-blue-700"
@@ -258,7 +292,7 @@ export default function Home()
                             onClick={() => handleAction("theses")}
                             disabled={isLoading}
                             title="Сгенерировать основные тезисы статьи"
-                            className={`w-full sm:flex-1 h-12 items-center justify-center rounded-lg px-4 sm:px-5 text-white font-medium text-sm sm:text-base transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                            className={`w-full sm:flex-1 sm:min-w-0 h-12 items-center justify-center rounded-lg px-4 sm:px-5 text-white font-medium text-sm sm:text-base transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                                 actionType === "theses" && isLoading
                                     ? "bg-green-700 ring-2 ring-green-400 ring-offset-2"
                                     : "bg-green-600 hover:bg-green-700"
@@ -270,7 +304,7 @@ export default function Home()
                             onClick={() => handleAction("telegram")}
                             disabled={isLoading}
                             title="Создать готовый пост для публикации в Telegram"
-                            className={`w-full sm:flex-1 h-12 items-center justify-center rounded-lg px-4 sm:px-5 text-white font-medium text-sm sm:text-base transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                            className={`w-full sm:flex-1 sm:min-w-0 h-12 items-center justify-center rounded-lg px-4 sm:px-5 text-white font-medium text-sm sm:text-base transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                                 actionType === "telegram" && isLoading
                                     ? "bg-purple-700 ring-2 ring-purple-400 ring-offset-2"
                                     : "bg-purple-600 hover:bg-purple-700"
@@ -279,10 +313,25 @@ export default function Home()
                             Пост для Telegram
                         </button>
                         <button
+                            onClick={() => handleAction("illustration")}
+                            disabled={isLoading}
+                            title="Сгенерировать иллюстрацию на основе статьи"
+                            className={`w-full sm:flex-1 sm:min-w-0 h-12 items-center justify-center rounded-lg px-4 sm:px-5 text-white font-medium text-sm sm:text-base whitespace-nowrap transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                                actionType === "illustration" && isLoading
+                                    ? "bg-pink-700 ring-2 ring-pink-400 ring-offset-2"
+                                    : "bg-pink-600 hover:bg-pink-700"
+                            }`}
+                        >
+                            Иллюстрация
+                        </button>
+                    </div>
+                    {/* Clear Button */}
+                    <div className="mb-6 sm:mb-8">
+                        <button
                             onClick={handleClear}
                             disabled={isLoading}
                             title="Очистить все поля и результаты"
-                            className="w-full sm:w-auto h-12 px-4 sm:px-5 rounded-lg bg-gray-500 text-white font-medium text-sm sm:text-base transition-colors hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full h-12 px-4 sm:px-5 rounded-lg bg-gray-500 text-white font-medium text-sm sm:text-base transition-colors hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             Очистить
                         </button>
@@ -321,6 +370,16 @@ export default function Home()
                                     {copySuccess ? "Скопировано!" : "Копировать"}
                                 </button>
                             )}
+                            {illustrationUrl && !isLoading && (
+                                <a
+                                    href={illustrationUrl}
+                                    download="illustration.png"
+                                    title="Скачать изображение"
+                                    className="w-full sm:w-auto px-4 py-2 text-sm rounded-lg bg-gray-600 text-white font-medium transition-colors hover:bg-gray-700 text-center"
+                                >
+                                    Скачать
+                                </a>
+                            )}
                         </div>
                         {isLoading ? (
                             <div className="flex items-center justify-center py-8">
@@ -328,6 +387,14 @@ export default function Home()
                                 <span className="ml-3 text-foreground text-sm sm:text-base">
                                     Генерация результата...
                                 </span>
+                            </div>
+                        ) : illustrationUrl ? (
+                            <div className="flex justify-center">
+                                <img 
+                                    src={illustrationUrl} 
+                                    alt="Сгенерированная иллюстрация" 
+                                    className="max-w-full h-auto rounded-lg shadow-lg"
+                                />
                             </div>
                         ) : result ? (
                             <div className="text-foreground whitespace-pre-wrap font-mono text-xs sm:text-sm overflow-auto break-words">
